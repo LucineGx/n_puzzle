@@ -41,6 +41,16 @@ def get_final_state(size) :
 				x -= 1
 	return (l)
 
+# End the program because no solution could be find
+
+def negativ_end() :
+	print("Open list is empty, no solution has been found")
+
+# Solution found, retrace the path and end it
+
+def positiv_end() :
+	print("Final state obtained. Still need a function to retrace the whole path")
+
 # Calculate the heuristic cost of the state with extended Manhattan distance
 
 def count_heuristic(size, state, cost, goal) :
@@ -51,12 +61,60 @@ def count_heuristic(size, state, cost, goal) :
 		ig = goal.index(n)
 		heuristic += abs(i / size - ig / size) + abs(i % size - ig % size)
 
-	return (heuristic)
+	return (heuristic + cost)
+
+# Check presence of new state in both list, then put it in the open one
+
+def check_new(new, openL, closedL, cost) :
+	if new in closedL :
+		return(FALSE)
+	else :
+		for elem in openL :
+			if elem[0] == new :
+				print("This state is already in openL. Old cost : " + elem[1] + ". Current cost : " + (cost+1))
+				if elem[1] <= cost + 1 :
+					return(FALSE)
+				else :
+					openL.remove(elem)
+					break
+	return(TRUE)
 
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
-def treat_state(openl, fs) :
-	print("ok")
+def treat_state(size, openl, fs, closedL) :
+	if len(openl) == 0 :
+		negativ_end()
+	openl.sort(key = lambda x : x[1])
+
+	s = openl[0]
+	if s[0] == fs :
+		positiv_end()
+
+	i = s[0].index(0)
+	if (i >= size) :
+		new = s[0][:]
+		new[i] = new[i - size]
+		new[i - size] = 0
+		if check_new(new, openl, closedL, s[1]) :
+			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+
+	if (i + 1 % size <> 0) :
+		new = s[0][:]
+		new[i] = new[i + 1]
+		new[i + 1] = 0
+		if check_new(new, openL, closedL, s[1]) :
+			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+
+	if (i/size <> size - 1) :
+		new = s[0][:]
+		new[i] = new[i + size]
+		new[i + size] = 0
+		if check_new(new, openL, closedL, s[1]) :
+			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+
+	if (i%size <> 0) :
+		new = s[0][:]
+
 
 # Read the file and create the Open list wih the initial state
 
@@ -64,6 +122,7 @@ def read_file(f) :
 	size = 0
 	state = []
 	openl = []
+	closedL = {}
 
 	for line in f :
 		if line[0] == '#' :
@@ -77,7 +136,7 @@ def read_file(f) :
 	state = map(int, state)
 	fs = get_final_state(size)
 	openl.append((state, 0, count_heuristic(size, state, 0, fs)))
-	treat_state(openl, fs)
+	treat_state(size, openl, fs, closedL)
 
 # Checks input and calls reading function
 
@@ -85,7 +144,6 @@ if __name__ == '__main__' :
 	if len (sys.argv) == 2 :
 		try :
 			f = open(sys.argv[1])
-			read_file(f)
 
 		except IOError as e :
 			sys.stdout.write(RED)
@@ -93,9 +151,12 @@ if __name__ == '__main__' :
 			sys.stdout.write(RESET)
 			print("To create a puzzle, you may use the generator")
 
-#		except Exception as e :
-#			sys.stdout.write(RED)
-#			print("Something went wrong : " + e.args[1])
+		except Exception as e :
+			sys.stdout.write(RED)
+			print("Something went wrong : " + e.args[1])
+
+		else :
+			read_file(f)
 
 	else :
 		print("usage : python npuzzle.py [file]")
