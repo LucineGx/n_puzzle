@@ -66,55 +66,68 @@ def count_heuristic(size, state, cost, goal) :
 # Check presence of new state in both list, then put it in the open one
 
 def check_new(new, openL, closedL, cost) :
-	if new in closedL :
-		return(FALSE)
-	else :
-		for elem in openL :
-			if elem[0] == new :
-				print("This state is already in openL. Old cost : " + elem[1] + ". Current cost : " + (cost+1))
-				if elem[1] <= cost + 1 :
-					return(FALSE)
-				else :
-					openL.remove(elem)
-					break
-	return(TRUE)
+	for elem in closedL :
+		if elem[0] == new :
+			if elem[1] <= cost + 1 :
+				return(False)
+			else :
+				closedL.remove(elem)
+				break
+	for elem in openL :
+		if elem[0] == new :
+			if elem[1] <= cost + 1 :
+				return(False)
+			else :
+				openL.remove(elem)
+				break
+	return(True)
 
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
-def treat_state(size, openl, fs, closedL) :
-	if len(openl) == 0 :
+def treat_state(size, openL, fs, closedL) :
+	if len(openL) == 0 :
 		negativ_end()
-	openl.sort(key = lambda x : x[1])
+	openL.sort(key = lambda x : x[1])
 
-	s = openl[0]
+	s = openL[0]
 	if s[0] == fs :
 		positiv_end()
 
-	i = s[0].index(0)
-	if (i >= size) :
-		new = s[0][:]
-		new[i] = new[i - size]
-		new[i - size] = 0
-		if check_new(new, openl, closedL, s[1]) :
-			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+	else :
+		i = s[0].index(0)
+		if (i >= size) :
+			new = s[0][:]
+			new[i] = new[i - size]
+			new[i - size] = 0
+			if check_new(new, openL, closedL, s[1]) :
+				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
 
-	if (i + 1 % size <> 0) :
-		new = s[0][:]
-		new[i] = new[i + 1]
-		new[i + 1] = 0
-		if check_new(new, openL, closedL, s[1]) :
-			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+		if ((i + 1) % size <> 0) :
+			new = s[0][:]
+			new[i] = new[i + 1]
+			new[i + 1] = 0
+			if check_new(new, openL, closedL, s[1]) :
+				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
 
-	if (i/size <> size - 1) :
-		new = s[0][:]
-		new[i] = new[i + size]
-		new[i + size] = 0
-		if check_new(new, openL, closedL, s[1]) :
-			openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+		if (i/size <> size - 1) :
+			new = s[0][:]
+			new[i] = new[i + size]
+			new[i + size] = 0
+			if check_new(new, openL, closedL, s[1]) :
+				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
 
-	if (i%size <> 0) :
-		new = s[0][:]
+		if (i%size <> 0) :
+			new = s[0][:]
+			new[i] = new[i - 1]
+			new[i - 1] = 0
+			if check_new(new, openL, closedL, s[1]) :
+				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
 
+		closedL.append(s)
+		del openL[0]
+		print("OPEN : " + str(len(openL)) + " | CLOSED : " + str(len(closedL)))
+		if len(closedL) < 995 :
+			treat_state(size, openL, fs, closedL)
 
 # Read the file and create the Open list wih the initial state
 
@@ -122,7 +135,7 @@ def read_file(f) :
 	size = 0
 	state = []
 	openl = []
-	closedL = {}
+	closedL = []
 
 	for line in f :
 		if line[0] == '#' :
