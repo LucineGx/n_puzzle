@@ -1,6 +1,8 @@
 import sys
 from my_colors import *
 
+# !! Verifie le parsing de securite à appliquer sur le fichier entrant
+
 # Generate the final state the puzzle should attempt
 
 def get_final_state(size) :
@@ -51,18 +53,6 @@ def negativ_end() :
 def positiv_end() :
 	print("Final state obtained. Still need a function to retrace the whole path")
 
-# Calculate the heuristic cost of the state with extended Manhattan distance
-
-def count_heuristic(size, state, cost, goal) :
-	heuristic = 0
-
-	for n in range(1, size * size) :
-		i = state.index(n)
-		ig = goal.index(n)
-		heuristic += abs(i / size - ig / size) + abs(i % size - ig % size)
-
-	return (heuristic + cost)
-
 # Check presence of new state in both list, then put it in the open one
 
 def check_new(new, openL, closedL, cost) :
@@ -82,9 +72,22 @@ def check_new(new, openL, closedL, cost) :
 				break
 	return(True)
 
+# Calculate the heuristic cost of the state with extended Manhattan distance
+
+def count_total_cost(current_s, final_s, size, cost) :
+	total = cost
+
+	for n in range(1, size * size) :
+		c_i = current_s.index(n)
+		f_i = final_s.index(n)
+		# heuristic depends on Mahattan distance : |Xa - Xb| + |Ya - Yb| 
+		total += abs(c_i / size - f_i / size) + abs(c_i % size - f_i % size)
+
+	return (total)
+
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
-def treat_state(size, openL, fs, closedL) :
+def treat_node(open_l, open_d, closed_d, final_s, size) :
 	if len(openL) == 0 :
 		negativ_end()
 	openL.sort(key = lambda x : x[1])
@@ -129,27 +132,33 @@ def treat_state(size, openL, fs, closedL) :
 		if len(closedL) < 995 :
 			treat_state(size, openL, fs, closedL)
 
-# Read the file and create the Open list wih the initial state
+# Create our list storages, and add the initial state as a first node in the open list
 
 def read_file(f) :
 	size = 0
-	state = []
-	openl = []
-	closedL = []
-
+	initial_s = []
 	for line in f :
 		if line[0] == '#' :
 			pass
 		elif size == 0 :
-			size = int(line)
+			size == int(line)
 		else :
-			state.extend(line.replace('\n', '').split(' '))
+			# remove \n in line then split it into numbers and add them on the initial state list
+			initial_s.extend(line.replace('\n', '').split(' '))
+	# the split function may create empty elements in the list, let's remove them
+	initial_s = filter(None, initial_s)
+	# just need to convert all those values into int type
+	initial_s = map(int, initial_s)
 
-	state = filter(None, state)
-	state = map(int, state)
-	fs = get_final_state(size)
-	openl.append((state, 0, count_heuristic(size, state, 0, fs)))
-	treat_state(size, openl, fs, closedL)
+	open_l = []
+	open_d = {}
+	closed_d = {}
+	final_s = get_final_state(size)
+	initial_c = count_total_cost(initial_s, final_s, size, 0)
+	# add initial state to both open list forms (list and dictionnary) 
+	open_l.append((initial_s, initial_c))
+	open_d[tuple(initial_s)] = (0, 0, initial_c)
+	treat_node(open_l, open_d, closed_d, final_s, size)
 
 # Checks input and calls reading function
 
