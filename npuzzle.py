@@ -1,11 +1,27 @@
 import sys
 from my_colors import *
+sys.setrecursionlimit(5000)
+# Note : c for cost, d for dictionary, f for file, i for index, l for list, s for state, t for tuple
 
-# !! Verifie le parsing de securite à appliquer sur le fichier entrant
+final_s = []
+size = 0
+
+def print_puzzle(state) :
+	s = ""
+	i = 0
+
+	while i < size * size :
+		if (i % size == 0) :
+			s += "\n"
+		s += str(state[i]) + " "
+		i += 1
+
+	print(s)
+
 
 # Generate the final state the puzzle should attempt
 
-def get_final_state(size) :
+def get_final_state() :
 	l = (size * size) * [0]
 	x = 0
 	y = 0
@@ -41,7 +57,9 @@ def get_final_state(size) :
 				y += 1
 			else :
 				x -= 1
-	return (l)
+
+	global final_s 
+	final_s = l
 
 # End the program because no solution could be find
 
@@ -50,98 +68,128 @@ def negativ_end() :
 
 # Solution found, retrace the path and end it
 
-def positiv_end() :
-	print("Final state obtained. Still need a function to retrace the whole path")
+def positiv_end(final_elem, closed_d, step) :
+
+	from_t = final_elem[0]
+	if (from_t <> 0) :
+		print_puzzle(from_t)
+		if (closed_d.has_key(from_t)) :
+			positiv_end(closed_d[from_t], closed_d, step + 1)
+		else :
+			print("Something went wrong, path is lost")
+	else :
+		print("Final state obtained. Function to retrace the whole path in construct..")
+		print(str(step) + " moves to solve this puzzle")
+
 
 # Check presence of new state in both list, then put it in the open one
 
-def check_new(new, openL, closedL, cost) :
-	for elem in closedL :
-		if elem[0] == new :
-			if elem[1] <= cost + 1 :
-				return(False)
-			else :
-				closedL.remove(elem)
-				break
-	for elem in openL :
-		if elem[0] == new :
-			if elem[1] <= cost + 1 :
-				return(False)
-			else :
-				openL.remove(elem)
-				break
+def check_new_node(new_t, current_c, open_l, open_d, closed_d, from_t) :
+	if closed_d.has_key(new_t) :
+		return (False)
+
+	elif open_d.has_key(new_t) :
+		# Compare old recorded cost and the new one, makes the change if needed
+		if open_d[new_t][1] > current_c :
+			new_c = count_total_cost(new_t, current_c)
+			open_d[new_t] = (from_t, current_c, new_c)
+
+			for i, elem in enumerate(open_l) :
+				if (elem[0] == new_t) :
+					open_l[i] = (list(new_t), new_c)
+
+
+		return(False)
+
 	return(True)
 
-# Calculate the heuristic cost of the state with extended Manhattan distance
+# Calculate the heuristic cost of the state with Manhattan distance applied to 
 
-def count_total_cost(current_s, final_s, size, cost) :
+def count_total_cost(new_s, cost) :
 	total = cost
 
 	for n in range(1, size * size) :
-		c_i = current_s.index(n)
+		c_i = new_s.index(n)
 		f_i = final_s.index(n)
-		# heuristic depends on Mahattan distance : |Xa - Xb| + |Ya - Yb| 
+		# Mahattan distance : |Xa - Xb| + |Ya - Yb| . X being the starting point and Y the goal
 		total += abs(c_i / size - f_i / size) + abs(c_i % size - f_i % size)
 
 	return (total)
 
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
-def treat_node(open_l, open_d, closed_d, final_s, size) :
-	if len(openL) == 0 :
-		negativ_end()
-	openL.sort(key = lambda x : x[1])
+def treat_node(open_l, open_d, closed_d) :
+	open_l.sort(key = lambda x : x[1])
 
-	s = openL[0]
-	if s[0] == fs :
-		positiv_end()
+	if len(open_l) == 0 :
+		negativ_end()
+
+	elif open_l[0][0] == final_s :
+		print_puzzle(final_s)
+		positiv_end(open_d[tuple(final_s)], closed_d, 0)
 
 	else :
+		s = open_l[0]
+#		print_puzzle(s[0])
 		i = s[0].index(0)
+		tuple_s = tuple(s[0])
+		elem = open_d[tuple_s]
+
 		if (i >= size) :
-			new = s[0][:]
-			new[i] = new[i - size]
-			new[i - size] = 0
-			if check_new(new, openL, closedL, s[1]) :
-				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+			new_s = s[0][:]
+			new_s[i] = new_s[i - size]
+			new_s[i - size] = 0
+			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
+				new_c = count_total_cost(new_s, elem[1] + 1)
+				open_l.append((new_s, new_c))
+				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if ((i + 1) % size <> 0) :
-			new = s[0][:]
-			new[i] = new[i + 1]
-			new[i + 1] = 0
-			if check_new(new, openL, closedL, s[1]) :
-				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+			new_s = s[0][:]
+			new_s[i] = new_s[i + 1]
+			new_s[i + 1] = 0
+			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
+				new_c = count_total_cost(new_s, elem[1] + 1)
+				open_l.append((new_s, new_c))
+				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i/size <> size - 1) :
-			new = s[0][:]
-			new[i] = new[i + size]
-			new[i + size] = 0
-			if check_new(new, openL, closedL, s[1]) :
-				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+			new_s = s[0][:]
+			new_s[i] = new_s[i + size]
+			new_s[i + size] = 0
+			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
+				new_c = count_total_cost(new_s, elem[1] + 1)
+				open_l.append((new_s, new_c))
+				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i%size <> 0) :
-			new = s[0][:]
-			new[i] = new[i - 1]
-			new[i - 1] = 0
-			if check_new(new, openL, closedL, s[1]) :
-				openL.append((new, s[1] + 1, count_heuristic(size, new, s[1] + 1, fs)))
+			new_s = s[0][:]
+			new_s[i] = new_s[i - 1]
+			new_s[i - 1] = 0
+			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
+				new_c = count_total_cost(new_s, elem[1] + 1)
+				open_l.append((new_s, new_c))
+				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
-		closedL.append(s)
-		del openL[0]
-		print("OPEN : " + str(len(openL)) + " | CLOSED : " + str(len(closedL)))
-		if len(closedL) < 995 :
-			treat_state(size, openL, fs, closedL)
+
+		closed_d[tuple_s] = elem
+		del open_l[0]
+		del open_d[tuple_s]
+
+#		print("OPEN : " + str(len(openL)) + " | CLOSED : " + str(len(closedL)))
+#		if len(open_l) < 10 :
+		treat_node(open_l, open_d, closed_d)
 
 # Create our list storages, and add the initial state as a first node in the open list
 
 def read_file(f) :
-	size = 0
+	global size
 	initial_s = []
 	for line in f :
 		if line[0] == '#' :
 			pass
 		elif size == 0 :
-			size == int(line)
+			size = int(line)
 		else :
 			# remove \n in line then split it into numbers and add them on the initial state list
 			initial_s.extend(line.replace('\n', '').split(' '))
@@ -153,12 +201,12 @@ def read_file(f) :
 	open_l = []
 	open_d = {}
 	closed_d = {}
-	final_s = get_final_state(size)
-	initial_c = count_total_cost(initial_s, final_s, size, 0)
+	get_final_state()
+	initial_c = count_total_cost(initial_s, 0)
 	# add initial state to both open list forms (list and dictionnary) 
 	open_l.append((initial_s, initial_c))
 	open_d[tuple(initial_s)] = (0, 0, initial_c)
-	treat_node(open_l, open_d, closed_d, final_s, size)
+	treat_node(open_l, open_d, closed_d)
 
 # Checks input and calls reading function
 
