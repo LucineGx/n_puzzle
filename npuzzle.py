@@ -1,6 +1,6 @@
 import sys
 from my_colors import *
-sys.setrecursionlimit(5000)
+sys.setrecursionlimit(10000)
 # Note : c for cost, d for dictionary, f for file, i for index, l for list, s for state, t for tuple
 
 final_s = []
@@ -58,7 +58,7 @@ def get_final_state() :
 			else :
 				x -= 1
 
-	global final_s 
+	global final_s
 	final_s = l
 
 # End the program because no solution could be find
@@ -81,6 +81,13 @@ def positiv_end(final_elem, closed_d, step) :
 		print("Final state obtained. Function to retrace the whole path in construct..")
 		print(str(step) + " moves to solve this puzzle")
 
+# Add the element at the right place in the list, so it doesn't need to be sorted
+
+def insert_into_open_list(open_l, new_s, new_c) :
+	for i in range(0, len(open_l)) :
+		if new_c > open_l[i] :
+			break
+	open_l.insert(i, (new_s, new_c))
 
 # Check presence of new state in both list, then put it in the open one
 
@@ -103,7 +110,7 @@ def check_new_node(new_t, current_c, open_l, open_d, closed_d, from_t) :
 
 	return(True)
 
-# Calculate the heuristic cost of the state with Manhattan distance applied to 
+# Calculate the heuristic cost of the state with Manhattan distance applied to
 
 def count_total_cost(new_s, cost) :
 	total = cost
@@ -119,8 +126,6 @@ def count_total_cost(new_s, cost) :
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
 def treat_node(open_l, open_d, closed_d) :
-	open_l.sort(key = lambda x : x[1])
-
 	if len(open_l) == 0 :
 		negativ_end()
 
@@ -141,7 +146,7 @@ def treat_node(open_l, open_d, closed_d) :
 			new_s[i - size] = 0
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
-				open_l.append((new_s, new_c))
+				insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if ((i + 1) % size <> 0) :
@@ -150,7 +155,7 @@ def treat_node(open_l, open_d, closed_d) :
 			new_s[i + 1] = 0
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
-				open_l.append((new_s, new_c))
+				insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i/size <> size - 1) :
@@ -159,7 +164,7 @@ def treat_node(open_l, open_d, closed_d) :
 			new_s[i + size] = 0
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
-				open_l.append((new_s, new_c))
+				insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i%size <> 0) :
@@ -168,7 +173,7 @@ def treat_node(open_l, open_d, closed_d) :
 			new_s[i - 1] = 0
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
-				open_l.append((new_s, new_c))
+				insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 
