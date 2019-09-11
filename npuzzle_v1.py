@@ -1,7 +1,8 @@
 import sys
 from my_colors import *
 sys.setrecursionlimit(10000)
-# Note : c for cost, d for dictionary, f for file, i for index, l for list, s for state, t for tuple
+# Note : c for cost, d for dictionary, f for file, i for index/itterate, j for second i, 
+# l for list, n for number, o for orientation, s for state, t for tuple, and y for coordinates
 
 final_s = []
 size = 0
@@ -25,41 +26,57 @@ def get_final_state() :
 	l = (size * size) * [0]
 	x = 0
 	y = 0
-	d = "right"
+	o = "right"
 
 	for n in range(1, size * size) :
 		l[size * x + y] = n
 
-		if d == "right":
+		if o == "right":
 			if y == size - 1 or l[size * x + y + 1] <> 0 :
-				d = "down"
+				o = "down"
 				x += 1
 			else :
 				y += 1
 
-		elif d == "down" :
+		elif o == "down" :
 			if x == size - 1 or l[size * (x + 1) + y] <> 0 :
-				d = "left"
+				o = "left"
 				y -= 1
 			else :
 				x += 1
 
-		elif d == "left" :
+		elif o == "left" :
 			if y == 0 or l[size * x + y - 1] <> 0 :
-				d = "up"
+				o = "up"
 				x -= 1
 			else :
 				y -= 1
 
-		elif d == "up" :
+		elif o == "up" :
 			if l[size * (x - 1) + y] <> 0 :
-				d = "right"
+				o = "right"
 				y += 1
 			else :
 				x -= 1
 
-	global final_s
+	global final_s 
 	final_s = l
+
+# Check inversion number to determinate rather or not the puzzle can be solve
+
+#def puzzle_is_solvable(s) :
+#	full_size = size * size
+#	inversion = 0
+
+#	for i in range(0, full_size) :
+#		n = s[i]
+#		if (n <> 0) :
+#			inversion += n - 1
+#			for j in range(0, i) :
+#				if s[j] < n :
+#					inversion -= 1
+
+#	if size % 2 <> 0 :
 
 # End the program because no solution could be find
 
@@ -81,13 +98,6 @@ def positiv_end(final_elem, closed_d, step) :
 		print("Final state obtained. Function to retrace the whole path in construct..")
 		print(str(step) + " moves to solve this puzzle")
 
-# Add the element at the right place in the list, so it doesn't need to be sorted
-
-def insert_into_open_list(open_l, new_s, new_c) :
-	for i in range(0, len(open_l)) :
-		if new_c > open_l[i] :
-			break
-	open_l.insert(i, (new_s, new_c))
 
 # Check presence of new state in both list, then put it in the open one
 
@@ -110,7 +120,7 @@ def check_new_node(new_t, current_c, open_l, open_d, closed_d, from_t) :
 
 	return(True)
 
-# Calculate the heuristic cost of the state with Manhattan distance applied to
+# Calculate the heuristic cost of the state with Manhattan distance applied to 
 
 def count_total_cost(new_s, cost) :
 	total = cost
@@ -126,17 +136,11 @@ def count_total_cost(new_s, cost) :
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
 def treat_node(open_l, open_d, closed_d) :
-	open_l.sort(key = lambda x : x[1])
-	if len(open_l) == 0 :
-		negativ_end()
+	while (len(open_l) <> 0 and open_l[0][0] <> final_s) :
+		open_l.sort(key = lambda x : x[1])
 
-	elif open_l[0][0] == final_s :
-		print_puzzle(final_s)
-		positiv_end(open_d[tuple(final_s)], closed_d, 0)
-
-	else :
 		s = open_l[0]
-#		print_puzzle(s[0])
+		print_puzzle(s[0])
 		i = s[0].index(0)
 		tuple_s = tuple(s[0])
 		elem = open_d[tuple_s]
@@ -148,7 +152,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if ((i + 1) % size <> 0) :
@@ -158,7 +161,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i/size <> size - 1) :
@@ -168,7 +170,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i%size <> 0) :
@@ -178,17 +179,17 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
-
 
 		closed_d[tuple_s] = elem
 		del open_l[0]
 		del open_d[tuple_s]
-
-#		print("OPEN : " + str(len(openL)) + " | CLOSED : " + str(len(closedL)))
-#		if len(open_l) < 10 :
-		treat_node(open_l, open_d, closed_d)
+		
+	if len(open_l) == 0 :
+		negativ_end()
+	elif (open_l[0][0] == final_s) :
+		print_puzzle(final_s)
+		positiv_end(open_d[tuple(final_s)], closed_d, 0)
 
 # Create our list storages, and add the initial state as a first node in the open list
 
@@ -208,6 +209,7 @@ def read_file(f) :
 	# just need to convert all those values into int type
 	initial_s = map(int, initial_s)
 
+#	if puzzle_is_solvable(initial_s) :
 	open_l = []
 	open_d = {}
 	closed_d = {}
@@ -217,6 +219,9 @@ def read_file(f) :
 	open_l.append((initial_s, initial_c))
 	open_d[tuple(initial_s)] = (0, 0, initial_c)
 	treat_node(open_l, open_d, closed_d)
+
+#	else :
+#		print("This puzzle can't be solve.")
 
 # Checks input and calls reading function
 
