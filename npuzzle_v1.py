@@ -64,19 +64,39 @@ def get_final_state() :
 
 # Check inversion number to determinate rather or not the puzzle can be solve
 
-#def puzzle_is_solvable(s) :
-#	full_size = size * size
-#	inversion = 0
+def puzzle_is_solvable(s) :
+	full_size = size * size
+	inversion = 0
 
-#	for i in range(0, full_size) :
-#		n = s[i]
-#		if (n <> 0) :
-#			inversion += n - 1
-#			for j in range(0, i) :
-#				if s[j] < n :
-#					inversion -= 1
-
-#	if size % 2 <> 0 :
+	for i in range(0, full_size) :
+		n = s[i]
+		if (n <> 0) :
+			inversion += n - 1
+			for j in range(0, i) :
+				if s[j] < n :
+					inversion -= 1
+	# if the size is odd, the number of inversion must be odd to
+	if size % 2 <> 0 :
+		if (inversion % 2 == 0) :
+			return (False)
+	
+	else :
+		tmp = 0
+		for i in range(full_size - 1, -1, -1) :
+			tmp += 1
+			if s[i] == 0 :
+				break
+		if size % 4 == 0 :
+			if tmp % 2 <> 0 and inversion % 2 <> 0 :
+				return(False)
+			if tmp % 2 == 0 and inversion == 0:
+				return(False)
+		else :
+			if tmp % 2 <> 0 and inversion % 2 == 0 :
+				return(False)
+			if tmp % 2 == 0 and inversion % 2 <> 0 :
+				return(False)
+	return(True)
 
 # End the program because no solution could be find
 
@@ -136,11 +156,8 @@ def count_total_cost(new_s, cost) :
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
 def treat_node(open_l, open_d, closed_d) :
-	while (len(open_l) <> 0 and open_l[0][0] <> final_s) :
-		open_l.sort(key = lambda x : x[1])
-
+	while (len(open_l) <> 0) :
 		s = open_l[0]
-		print_puzzle(s[0])
 		i = s[0].index(0)
 		tuple_s = tuple(s[0])
 		elem = open_d[tuple_s]
@@ -184,12 +201,15 @@ def treat_node(open_l, open_d, closed_d) :
 		closed_d[tuple_s] = elem
 		del open_l[0]
 		del open_d[tuple_s]
+	
+		open_l.sort(key = lambda x : x[1])
+		if open_l[0][0] == final_s :
+			print_puzzle(final_s)
+			positiv_end(open_d[tuple(final_s)], closed_d, 0)
+			break
 		
 	if len(open_l) == 0 :
 		negativ_end()
-	elif (open_l[0][0] == final_s) :
-		print_puzzle(final_s)
-		positiv_end(open_d[tuple(final_s)], closed_d, 0)
 
 # Create our list storages, and add the initial state as a first node in the open list
 
@@ -209,19 +229,18 @@ def read_file(f) :
 	# just need to convert all those values into int type
 	initial_s = map(int, initial_s)
 
-#	if puzzle_is_solvable(initial_s) :
-	open_l = []
-	open_d = {}
-	closed_d = {}
-	get_final_state()
-	initial_c = count_total_cost(initial_s, 0)
-	# add initial state to both open list forms (list and dictionnary) 
-	open_l.append((initial_s, initial_c))
-	open_d[tuple(initial_s)] = (0, 0, initial_c)
-	treat_node(open_l, open_d, closed_d)
-
-#	else :
-#		print("This puzzle can't be solve.")
+	if puzzle_is_solvable(initial_s) :
+		open_l = []
+		open_d = {}
+		closed_d = {}
+		get_final_state()
+		initial_c = count_total_cost(initial_s, 0)
+		#add initial state to both open list forms (list and dictionnary) 
+		open_l.append((initial_s, initial_c))
+		open_d[tuple(initial_s)] = (0, 0, initial_c)
+		treat_node(open_l, open_d, closed_d)
+	else :
+		print("This puzzle can't be solve.")
 
 # Checks input and calls reading function
 
