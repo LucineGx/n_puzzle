@@ -85,16 +85,12 @@ def puzzle_is_solvable(s) :
 			tmp += 1
 			if s[i] == 0 :
 				break
-		#if size % 4 == 0 :
-		#	if tmp % 2 <> 0 and inversion % 2 <> 0 :
-		#		return(False)
-		#	if tmp % 2 == 0 and inversion == 0:
-		#		return(False)
-		#else :
-		if tmp % 2 <> 0 and inversion % 2 == 0 :
-			return(False)
-		if tmp % 2 == 0 and inversion % 2 <> 0 :
-			return(False)
+		if size % 4 == 0 :
+			if tmp % 2 == inversion % 2 :
+				return(False)
+		else :
+			if tmp % 2 <> inversion % 2 :
+				return(False)
 	print("SOLVABLE")
 	return(True)
 

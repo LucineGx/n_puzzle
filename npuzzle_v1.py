@@ -6,6 +6,8 @@ sys.setrecursionlimit(10000)
 
 final_s = []
 size = 0
+total_s = 0
+max_s = 0
 
 def print_puzzle(state) :
 	s = ""
@@ -18,7 +20,6 @@ def print_puzzle(state) :
 		i += 1
 
 	print(s)
-
 
 # Generate the final state the puzzle should attempt
 
@@ -87,15 +88,12 @@ def puzzle_is_solvable(s) :
 			if s[i] == 0 :
 				break
 		if size % 4 == 0 :
-			if tmp % 2 <> 0 and inversion % 2 <> 0 :
-				return(False)
-			if tmp % 2 == 0 and inversion == 0:
+			if tmp % 2 == inversion % 2 :
 				return(False)
 		else :
-			if tmp % 2 <> 0 and inversion % 2 == 0 :
+			if tmp % 2 <> inversion % 2 :
 				return(False)
-			if tmp % 2 == 0 and inversion % 2 <> 0 :
-				return(False)
+	print("This puzzle can be solved...")
 	return(True)
 
 # End the program because no solution could be find
@@ -105,18 +103,23 @@ def negativ_end() :
 
 # Solution found, retrace the path and end it
 
-def positiv_end(final_elem, closed_d, step) :
+def positiv_end(final_elem, closed_d, step, aff) :
+	global total_s
+	global max_s
 
 	from_t = final_elem[0]
 	if (from_t <> 0) :
-		print_puzzle(from_t)
 		if (closed_d.has_key(from_t)) :
-			positiv_end(closed_d[from_t], closed_d, step + 1)
+			step = positiv_end(closed_d[from_t], closed_d, step + 1, False)
 		else :
 			print("Something went wrong, path is lost")
-	else :
-		print("Final state obtained. Function to retrace the whole path in construct..")
+		print_puzzle(from_t)
+	if (aff) :
+		print_puzzle(final_s)
 		print(str(step) + " moves to solve this puzzle")
+		print("Complexity in time : " + str(total_s))
+		print("Complexity in size : " + str(max_s))
+	return(step)
 
 
 # Check presence of new state in both list, then put it in the open one
@@ -137,7 +140,9 @@ def check_new_node(new_t, current_c, open_l, open_d, closed_d, from_t) :
 
 
 		return(False)
-
+	
+	global total_s
+	total_s += 1
 	return(True)
 
 # Calculate the heuristic cost of the state with Manhattan distance applied to 
@@ -156,6 +161,8 @@ def count_total_cost(new_s, cost) :
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
 def treat_node(open_l, open_d, closed_d) :
+	global max_s
+	global final_s
 	while (len(open_l) <> 0) :
 		s = open_l[0]
 		i = s[0].index(0)
@@ -198,14 +205,16 @@ def treat_node(open_l, open_d, closed_d) :
 				open_l.append((new_s, new_c))
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
+		if (len(open_l) + len(closed_d) > max_s) :
+			max_s = len(open_l) + len(open_d)
 		closed_d[tuple_s] = elem
 		del open_l[0]
 		del open_d[tuple_s]
 	
-		open_l.sort(key = lambda x : x[1])
+	#	open_l.sort(key = lambda x : x[1])
 		if open_l[0][0] == final_s :
-			print_puzzle(final_s)
-			positiv_end(open_d[tuple(final_s)], closed_d, 0)
+			print(open_l[0][1])
+			positiv_end(open_d[tuple(final_s)], closed_d, 0, True)
 			break
 		
 	if len(open_l) == 0 :
@@ -215,6 +224,7 @@ def treat_node(open_l, open_d, closed_d) :
 
 def read_file(f) :
 	global size
+	global total_s
 	initial_s = []
 	for line in f :
 		if line[0] == '#' :
@@ -238,6 +248,7 @@ def read_file(f) :
 		#add initial state to both open list forms (list and dictionnary) 
 		open_l.append((initial_s, initial_c))
 		open_d[tuple(initial_s)] = (0, 0, initial_c)
+		total_s = 1
 		treat_node(open_l, open_d, closed_d)
 	else :
 		print("This puzzle can't be solve.")
