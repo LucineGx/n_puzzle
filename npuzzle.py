@@ -1,10 +1,13 @@
 import sys
 from my_colors import *
 sys.setrecursionlimit(10000)
-# Note : c for cost, d for dictionary, f for file, i for index, l for list, s for state, t for tuple
+# Note : c for cost, d for dictionary, f for file, i for index/itterate, j for second i, 
+# l for list, n for number, o for orientation, s for state, t for tuple, and y for coordinates
 
 final_s = []
 size = 0
+total_s = 0
+max_s = 0
 
 def print_puzzle(state) :
 	s = ""
@@ -18,47 +21,46 @@ def print_puzzle(state) :
 
 	print(s)
 
-
 # Generate the final state the puzzle should attempt
 
 def get_final_state() :
 	l = (size * size) * [0]
 	x = 0
 	y = 0
-	d = "right"
+	o = "right"
 
 	for n in range(1, size * size) :
 		l[size * x + y] = n
 
-		if d == "right":
+		if o == "right":
 			if y == size - 1 or l[size * x + y + 1] <> 0 :
-				d = "down"
+				o = "down"
 				x += 1
 			else :
 				y += 1
 
-		elif d == "down" :
+		elif o == "down" :
 			if x == size - 1 or l[size * (x + 1) + y] <> 0 :
-				d = "left"
+				o = "left"
 				y -= 1
 			else :
 				x += 1
 
-		elif d == "left" :
+		elif o == "left" :
 			if y == 0 or l[size * x + y - 1] <> 0 :
-				d = "up"
+				o = "up"
 				x -= 1
 			else :
 				y -= 1
 
-		elif d == "up" :
+		elif o == "up" :
 			if l[size * (x - 1) + y] <> 0 :
-				d = "right"
+				o = "right"
 				y += 1
 			else :
 				x -= 1
 
-	global final_s
+	global final_s 
 	final_s = l
 
 # Check inversion number to determinate rather or not the puzzle can be solve
@@ -91,7 +93,7 @@ def puzzle_is_solvable(s) :
 		else :
 			if tmp % 2 <> inversion % 2 :
 				return(False)
-	print("SOLVABLE")
+	print("This puzzle can be solved...")
 	return(True)
 
 # End the program because no solution could be find
@@ -101,26 +103,24 @@ def negativ_end() :
 
 # Solution found, retrace the path and end it
 
-def positiv_end(final_elem, closed_d, step) :
+def positiv_end(final_elem, closed_d, step, aff) :
+	global total_s
+	global max_s
 
 	from_t = final_elem[0]
 	if (from_t <> 0) :
-		print_puzzle(from_t)
 		if (closed_d.has_key(from_t)) :
-			positiv_end(closed_d[from_t], closed_d, step + 1)
+			step = positiv_end(closed_d[from_t], closed_d, step + 1, False)
 		else :
 			print("Something went wrong, path is lost")
-	else :
-		print("Final state obtained. Function to retrace the whole path in construct..")
+		print_puzzle(from_t)
+	if (aff) :
+		print_puzzle(final_s)
 		print(str(step) + " moves to solve this puzzle")
+		print("Complexity in time : " + str(total_s))
+		print("Complexity in size : " + str(max_s))
+	return(step)
 
-# Add the element at the right place in the list, so it doesn't need to be sorted
-
-def insert_into_open_list(open_l, new_s, new_c) :
-	for i in range(0, len(open_l)) :
-		if new_c > open_l[i] :
-			break
-	open_l.insert(i, (new_s, new_c))
 
 # Check presence of new state in both list, then put it in the open one
 
@@ -140,10 +140,12 @@ def check_new_node(new_t, current_c, open_l, open_d, closed_d, from_t) :
 
 
 		return(False)
-
+	
+	global total_s
+	total_s += 1
 	return(True)
 
-# Calculate the heuristic cost of the state with Manhattan distance applied to
+# Calculate the heuristic cost of the state with Manhattan distance applied to 
 
 def count_total_cost(new_s, cost) :
 	total = cost
@@ -159,17 +161,10 @@ def count_total_cost(new_s, cost) :
 # Get lower cost state in OpenList, put its neighbours in openList, put state in ClosedList
 
 def treat_node(open_l, open_d, closed_d) :
-	open_l.sort(key = lambda x : x[1])
-	if len(open_l) == 0 :
-		negativ_end()
-
-	elif open_l[0][0] == final_s :
-		print_puzzle(final_s)
-		positiv_end(open_d[tuple(final_s)], closed_d, 0)
-
-	else :
+	global max_s
+	global final_s
+	while (len(open_l) <> 0) :
 		s = open_l[0]
-#		print_puzzle(s[0])
 		i = s[0].index(0)
 		tuple_s = tuple(s[0])
 		elem = open_d[tuple_s]
@@ -181,7 +176,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if ((i + 1) % size <> 0) :
@@ -191,7 +185,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i/size <> size - 1) :
@@ -201,7 +194,6 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
 		if (i%size <> 0) :
@@ -211,22 +203,28 @@ def treat_node(open_l, open_d, closed_d) :
 			if check_new_node(tuple(new_s), elem[1] + 1, open_l, open_d, closed_d, tuple_s) :
 				new_c = count_total_cost(new_s, elem[1] + 1)
 				open_l.append((new_s, new_c))
-			#	insert_into_open_list(open_l, new_s, new_c)
 				open_d[tuple(new_s)] = (tuple_s, elem[1] + 1, new_c)
 
-
+		if (len(open_l) + len(closed_d) > max_s) :
+			max_s = len(open_l) + len(open_d)
 		closed_d[tuple_s] = elem
 		del open_l[0]
 		del open_d[tuple_s]
-
-#		print("OPEN : " + str(len(openL)) + " | CLOSED : " + str(len(closedL)))
-#		if len(open_l) < 10 :
-		treat_node(open_l, open_d, closed_d)
+	
+	#	open_l.sort(key = lambda x : x[1])
+		if open_l[0][0] == final_s :
+			print(open_l[0][1])
+			positiv_end(open_d[tuple(final_s)], closed_d, 0, True)
+			break
+		
+	if len(open_l) == 0 :
+		negativ_end()
 
 # Create our list storages, and add the initial state as a first node in the open list
 
 def read_file(f) :
 	global size
+	global total_s
 	initial_s = []
 	for line in f :
 		if line[0] == '#' :
@@ -247,12 +245,13 @@ def read_file(f) :
 		closed_d = {}
 		get_final_state()
 		initial_c = count_total_cost(initial_s, 0)
-		# add initial state to both open list forms (list and dictionnary) 
+		#add initial state to both open list forms (list and dictionnary) 
 		open_l.append((initial_s, initial_c))
 		open_d[tuple(initial_s)] = (0, 0, initial_c)
+		total_s = 1
 		treat_node(open_l, open_d, closed_d)
 	else :
-		print("This puzzle can't be sold")
+		print("This puzzle can't be solve.")
 
 # Checks input and calls reading function
 

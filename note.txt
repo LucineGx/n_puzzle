@@ -1,0 +1,12 @@
+
+bonus : prendre plusieurs puzzle à la suite
+bonus : prendre en entrée l'état final voulu (en gardant celui du sujet par defaut)
+
+Test : supprimer le dictionnaire et ajouter une fonction qui verifie la presence 
+dans la liste
+
+
+
++ recouper les classes en une ET differencier les variables de classe et les variables d'instances
++ utiliser fonction pop() pour recuperer le premier element de la liste  et l'en
+supprimer
