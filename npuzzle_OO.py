@@ -109,9 +109,13 @@ class NPuzzleGame :
 class TilesState :
     """Keep a state of tiles, and define how to manipulate them"""
 
-    def __init__(self, l, game) :
+    def __init__(self, l, game, c) :
         self.l = l
+        self.c = c
+        self.total_c = c
         self.game = game
+
+        self.GetHeuristic()
     
     def PrintState(self) :
         s = ""
@@ -122,7 +126,16 @@ class TilesState :
             if (self.l[i] < 10) :
                 s += " "
         print(s)
+    
+    def GetHeuristic(self) :
+        size = self.game.size
+        for n in range(1, self.game.full_size) :
+            new_i = self.l.index(n)
+            goal_i = self.game.final_s.index(n)
+            self.total_c += abs(new_i/size - goal_i/size) + abs(new_i%size - goal_i%size)
 
+    def AddToOpenList(self) :
+        self.game.open_l.append((initial))
 
 if __name__ == '__main__' :
     if len(sys.argv) == 2 :
