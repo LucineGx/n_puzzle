@@ -7,6 +7,5 @@ dans la liste
 
 
 
-+ recouper les classes en une ET differencier les variables de classe et les variables d'instances
 + utiliser fonction pop() pour recuperer le premier element de la liste  et l'en
 supprimer

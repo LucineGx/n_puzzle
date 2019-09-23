@@ -1,63 +1,89 @@
 import sys
 from my_colors import *
-class NPuzzleGame :
+class Game :
     """The n-puzzle game rules the interaction between the states of the tiles"""
+    size = 0
+    final_s = []
+    total_s = 0
+    max_s = 0
 
-    def __init__(self, input_file):
-        self.size = 0
-        self.final_s = []
-        self.total_s = 0
-        self.max_s = 0
+    open_l = []
+    open_d = {}
+    closed_d = {}
 
-        self.open_l = []
-        self.open_d = {}
-        self.closed_d = {}
+    def __init__(self, input_file = False, l = [], c = 0):
+        self.l = l
+        self.c = c
+        self.total_c = c
 
-        if self.ReadFile(input_file) :
-            self.GetFinalState()
-            pass
+        if input_file :
+            if self.ReadFile(input_file) :
+                self.GetFinalState()
+                self.GetHeuristic()
+                self.AddToOpenList()
+            else :
+                print(RED + "This puzzle can not be solved" + RESET)
         else :
-            print(RED + "This puzzle can not be solved" + RESET)
+            #self.GetHeuristic()
+        
 
     def full_size(self) :
-        return (self.size**2)
+        return (Game.size**2)
+    
+    def PrintState(self) :
+        s = ""
+        for i in range(0, self.full_size()) :
+            if i % Game.size == 0 :
+                s += "\n"
+            s += str(self.l[i]) + " "
+            if (self.l[i] < 10) :
+                s += " "
+        print(s)
+
+    def ResetGame(self) :
+        Game.size = 0
+        Game.final_s = []
+        Game.total_s = 0
+        Game.max_s = 0
+        Game.open_l = []
+        Game.open_d = {}
+        Game.closed_d = {}
 
     def ReadFile(self, f) :
-        initial_s = []
         for line in f :
             if line[0] == '#' :
                 pass
-            elif self.size == 0 :
-                self.size = int(line)
+            elif Game.size == 0 :
+                Game.size = int(line)
             else :
      #remove \n + split the line in a tab which is combined to the initial state list
-                initial_s.extend(line.replace('\n','').split(' '))
+                self.l.extend(line.replace('\n','').split(' '))
         #remove empty elements that the split function could have created
-        initial_s = filter(None, initial_s)
+        self.l = filter(None, self.l)
         #convert str values into ints
-        initial_s = map(int, initial_s)
-        return (self.SolutionExists(initial_s))
+        self.l = map(int, self.l)
+        return (self.SolutionExists())
 
-    def SolutionExists(self, s) :
+    def SolutionExists(self) :
         #first count how many inversion there is, compare to an usual n-puzzle solution
         inversion = 0
         for i in range(0, self.full_size()) :
-            if (s[i] <> 0) :
+            if (self.l[i] <> 0) :
                 for j in range(0, i) :
-                    if s[j] > s[i] :
+                    if self.l[j] > self.l[i] :
                         inversion += 1
 	    # if the size is odd, the number of inversion must be odd too
-        if self.size % 2 and inversion % 2 == 0 :
+        if Game.size % 2 and inversion % 2 == 0 :
             return False
         
-        elif not self.size % 2 :
+        elif not Game.size % 2 :
             null_rindex = 0
             # with an even size, the 0 index comes as a condition that must be checked
             for i in range(self.full_size() - 1, -1, -1) :
                 null_rindex += 1
-                if s[i] == 0 :
+                if self.l[i] == 0 :
                     break
-            if self.size % 4 :
+            if Game.size % 4 :
                 if null_rindex % 2 == inversion % 2 :
                     return False
             else :
@@ -73,69 +99,53 @@ class NPuzzleGame :
         o = "right"
 
         for n in range(1, self.full_size()) :
-		l[self.size * x + y] = n
+		l[Game.size * x + y] = n
 
 		if o == "right":
-			if y == self.size - 1 or l[self.size * x + y + 1] <> 0 :
+			if y == Game.size - 1 or l[Game.size * x + y + 1] <> 0 :
 				o = "down"
 				x += 1
 			else :
 				y += 1
 
 		elif o == "down" :
-			if x == self.size - 1 or l[self.size * (x + 1) + y] <> 0 :
+			if x == Game.size - 1 or l[Game.size * (x + 1) + y] <> 0 :
 				o = "left"
 				y -= 1
 			else :
 				x += 1
 
 		elif o == "left" :
-			if y == 0 or l[self.size * x + y - 1] <> 0 :
+			if y == 0 or l[Game.size * x + y - 1] <> 0 :
 				o = "up"
 				x -= 1
 			else :
 				y -= 1
 
 		elif o == "up" :
-			if l[self.size * (x - 1) + y] <> 0 :
+			if l[Game.size * (x - 1) + y] <> 0 :
 				o = "right"
 				y += 1
 			else :
 				x -= 1
         
-        self.final_s = l
-
-
-class TilesState :
-    """Keep a state of tiles, and define how to manipulate them"""
-
-    def __init__(self, l, game, c) :
-        self.l = l
-        self.c = c
-        self.total_c = c
-        self.game = game
-
-        self.GetHeuristic()
-    
-    def PrintState(self) :
-        s = ""
-        for i in range(0, self.game.full_size()) :
-            if i % self.game.size == 0 :
-                s += "\n"
-            s += str(self.l[i]) + " "
-            if (self.l[i] < 10) :
-                s += " "
-        print(s)
+        Game.final_s = l
     
     def GetHeuristic(self) :
-        size = self.game.size
-        for n in range(1, self.game.full_size) :
+        size = Game.size
+        for n in range(1, self.full_size) :
             new_i = self.l.index(n)
-            goal_i = self.game.final_s.index(n)
+            goal_i = Game.final_s.index(n)
             self.total_c += abs(new_i/size - goal_i/size) + abs(new_i%size - goal_i%size)
 
     def AddToOpenList(self) :
-        self.game.open_l.append((initial))
+
+        Game.open_l.append((self.l, self.c))
+        Game.open_d[tuple(self.l)] = (0, 0, self.c)
+        Game.total_s += 1
+
+    def TreatNode(self) :
+
 
 if __name__ == '__main__' :
     if len(sys.argv) == 2 :
@@ -151,7 +161,9 @@ if __name__ == '__main__' :
             print("Something went wrong : " + e.args[1])
         
         else :
-            game = NPuzzleGame(f)
+            start = Game(f)
+            while (len(open_l))
+
     
     else :
         print("usage : python npuzzle.py [file]")
